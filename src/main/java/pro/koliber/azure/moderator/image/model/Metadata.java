@@ -3,9 +3,7 @@ package pro.koliber.azure.moderator.image.model;
 public class Metadata {
 
     private Integer width;
-
     private Integer height;
-
     private String format;
 
     public Integer getWidth() {

@@ -5,7 +5,6 @@ import java.io.Serializable;
 public class Tag implements Serializable {
 
     private String name;
-
     private Double confidence;
 
     public String getName() {

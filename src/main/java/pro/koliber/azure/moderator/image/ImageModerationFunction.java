@@ -5,20 +5,11 @@ import com.microsoft.azure.functions.*;
 import com.microsoft.azure.functions.annotation.AuthorizationLevel;
 import com.microsoft.azure.functions.annotation.FunctionName;
 import com.microsoft.azure.functions.annotation.HttpTrigger;
-import org.apache.http.HttpEntity;
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.utils.URIBuilder;
-import org.apache.http.entity.StringEntity;
-import org.apache.http.impl.client.HttpClients;
-import org.apache.http.util.EntityUtils;
+import pro.koliber.azure.moderator.image.model.ComputerVisionResult;
 import pro.koliber.azure.moderator.image.model.ModerationResult;
+import pro.koliber.azure.moderator.image.service.ComputerVisionService;
 import pro.koliber.azure.moderator.image.service.ModerationService;
 
-import java.io.IOException;
-import java.net.URI;
-import java.net.URISyntaxException;
 import java.util.Optional;
 
 /**
@@ -33,61 +24,49 @@ public class ImageModerationFunction {
      * Please provide image url in POST request body: {"url":"https://www.example.com/image.jpg"}
      * The Function calls Cognitive Service - Computer Vision API v. 2.0 and evaluates images for adult content & tags.
      */
-    @FunctionName("HttpTrigger-Java")
+    @FunctionName("image-moderator")
     public HttpResponseMessage run(
             @HttpTrigger(name = "req", methods = {HttpMethod.POST}, authLevel = AuthorizationLevel.FUNCTION) HttpRequestMessage<Optional<String>> request,
             final ExecutionContext context) {
 
-        context.getLogger().info("Java HTTP trigger processed a request.");
-
-        // Request to Computer Vision API
-
-        HttpClient httpClient = HttpClients.createDefault();
-        URIBuilder builder = null;
-
-        String key = System.getenv().get("COMPUTER_VISION_KEY");
         Optional<String> requestBody = request.getBody();
 
         if(requestBody.isPresent()) {
 
+            String key = System.getenv().get("COMPUTER_VISION_KEY");
+            String region = System.getenv().get("COMPUTER_VISION_REGION");
+
+            context.getLogger().info("Calling Computer Vision API in " + region);
+
+            ComputerVisionService visionService = new ComputerVisionService(key, region);
+
             try {
-                builder = new URIBuilder("https://westeurope.api.cognitive.microsoft.com/vision/v2.0/analyze");
-                builder.setParameter("visualFeatures", "Tags,Adult");
-                URI uri = builder.build();
+                ComputerVisionResult visionResult = visionService.callComputerVisionService(requestBody.get());
 
-                HttpPost postRequest = new HttpPost(uri);
-                postRequest.setHeader("Content-Type", "application/json");
-                postRequest.setHeader("Ocp-Apim-Subscription-Key", key);
+                ModerationService moderationService = new ModerationService();
+                ModerationResult moderationResult = moderationService.moderateImage(visionResult);
 
-                // Request
-                StringEntity stringEntity = new StringEntity(requestBody.get());
-                postRequest.setEntity(stringEntity);
+                Gson gson = new Gson();
+                String json = gson.toJson(moderationResult);
 
-                // Response
-                HttpResponse response = httpClient.execute(postRequest);
-                HttpEntity entity = response.getEntity();
-
-                if(null != entity){
-
-                    ModerationService service = new ModerationService();
-
-                    ModerationResult result = service.moderateImage(EntityUtils.toString(entity));
-
-                    Gson gson = new Gson();
-                    String json = gson.toJson(result);
-
-                    return request.createResponseBuilder(HttpStatus.OK).header("Content-Type", "application/json").body(json).build();
-
-                } else {
-                    return request.createResponseBuilder(HttpStatus.BAD_REQUEST).body("Something went wrong").build();
-                }
+                return request
+                        .createResponseBuilder(HttpStatus.OK)
+                        .header("Content-Type", "application/json")
+                        .body(json)
+                        .build();
 
 
-            } catch (URISyntaxException | IOException e) {
+            } catch (Exception e) {
                 context.getLogger().info(e.getMessage());
+                return request
+                        .createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR)
+                        .body("Could not process image")
+                        .build();
             }
-
         }
-        return request.createResponseBuilder(HttpStatus.INTERNAL_SERVER_ERROR).body("Could not process image").build();
+        return request
+                .createResponseBuilder(HttpStatus.BAD_REQUEST)
+                .body("Please provide image url in request body")
+                .build();
     }
 }

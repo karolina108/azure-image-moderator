@@ -6,9 +6,7 @@ import java.util.List;
 public class ModerationResult implements Serializable {
 
     private ModerationStatus status = ModerationStatus.NO_INFO;
-
     private Adult adultInfo;
-
     private List<Tag> tags;
 
     public ModerationStatus getStatus() {

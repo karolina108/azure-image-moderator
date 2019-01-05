@@ -1,6 +1,5 @@
 package pro.koliber.azure.moderator.image.service;
 
-import com.google.gson.Gson;
 import pro.koliber.azure.moderator.image.model.ComputerVisionResult;
 import pro.koliber.azure.moderator.image.model.ModerationResult;
 import pro.koliber.azure.moderator.image.model.ModerationStatus;
@@ -16,9 +15,7 @@ public class ModerationService {
     private static final List<String> ART_CONTENT_TAGS = Arrays.asList("art", "sculpture", "figure", "painting", "statue");
     private static final List<String> DISALLOWED_CONTENT_TAGS = Arrays.asList("weapon", "gun", "violence");
 
-    public ModerationResult moderateImage(String json){
-
-        ComputerVisionResult result = getComputerVisionResult(json);
+    public ModerationResult moderateImage(ComputerVisionResult result){
 
         ModerationResult moderationResult = new ModerationResult();
         moderationResult.setAdultInfo(result.getAdult());
@@ -91,9 +88,5 @@ public class ModerationService {
 
     }
 
-    private ComputerVisionResult getComputerVisionResult(String json){
 
-        Gson gson = new Gson();
-        return gson.fromJson(json, ComputerVisionResult.class);
-    }
 }

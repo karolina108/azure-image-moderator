@@ -5,29 +5,10 @@ import java.util.List;
 
 public class ComputerVisionResult implements Serializable {
 
-    private Adult adult;
-
-    private List<Tag> tags;
-
     private String requestId;
-
     private Metadata metadata;
-
-    public Adult getAdult() {
-        return adult;
-    }
-
-    public void setAdult(Adult adult) {
-        this.adult = adult;
-    }
-
-    public List<Tag> getTags() {
-        return tags;
-    }
-
-    public void setTags(List<Tag> tags) {
-        this.tags = tags;
-    }
+    private Adult adult;
+    private List<Tag> tags;
 
     public String getRequestId() {
         return requestId;
@@ -45,13 +26,29 @@ public class ComputerVisionResult implements Serializable {
         this.metadata = metadata;
     }
 
+    public Adult getAdult() {
+        return adult;
+    }
+
+    public void setAdult(Adult adult) {
+        this.adult = adult;
+    }
+
+    public List<Tag> getTags() {
+        return tags;
+    }
+
+    public void setTags(List<Tag> tags) {
+        this.tags = tags;
+    }
+
     @Override
     public String toString() {
         return "ComputerVisionResult{" +
-                "adult=" + adult +
-                ", tags=" + tags +
-                ", requestId='" + requestId + '\'' +
+                "requestId='" + requestId + '\'' +
                 ", metadata=" + metadata +
+                ", adult=" + adult +
+                ", tags=" + tags +
                 '}';
     }
 }

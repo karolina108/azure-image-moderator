@@ -5,11 +5,8 @@ import java.io.Serializable;
 public class Adult implements Serializable {
 
     private Boolean isAdultContent;
-
     private Boolean isRacyContent;
-
     private Double adultScore;
-
     private Double racyScore;
 
     public Boolean getAdultContent() {
