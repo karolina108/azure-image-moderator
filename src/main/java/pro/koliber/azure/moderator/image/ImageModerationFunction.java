@@ -1,12 +1,10 @@
 package pro.koliber.azure.moderator.image;
 
-import java.io.IOException;
-import java.io.UnsupportedEncodingException;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.util.*;
-import com.microsoft.azure.functions.annotation.*;
+import com.google.gson.Gson;
 import com.microsoft.azure.functions.*;
+import com.microsoft.azure.functions.annotation.AuthorizationLevel;
+import com.microsoft.azure.functions.annotation.FunctionName;
+import com.microsoft.azure.functions.annotation.HttpTrigger;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.HttpClient;
@@ -15,11 +13,21 @@ import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.entity.StringEntity;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
+import pro.koliber.azure.moderator.image.model.ModerationResult;
+import pro.koliber.azure.moderator.image.service.ModerationService;
+
+import java.io.IOException;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.util.Optional;
 
 /**
  * Azure Functions with HTTP Trigger.
  */
 public class ImageModerationFunction {
+    public ImageModerationFunction() {
+    }
+
     /**
      * This function listens at endpoint "/api/HttpTrigger-Java".
      * Please provide image url in POST request body: {"url":"https://www.example.com/image.jpg"}
@@ -59,13 +67,19 @@ public class ImageModerationFunction {
                 HttpResponse response = httpClient.execute(postRequest);
                 HttpEntity entity = response.getEntity();
 
-                String functionResponseBody;
-
                 if(null != entity){
-                    functionResponseBody = EntityUtils.toString(entity);
-                    return request.createResponseBuilder(HttpStatus.OK).body(functionResponseBody).build();
+
+                    ModerationService service = new ModerationService();
+
+                    ModerationResult result = service.moderateImage(EntityUtils.toString(entity));
+
+                    Gson gson = new Gson();
+                    String json = gson.toJson(result);
+
+                    return request.createResponseBuilder(HttpStatus.OK).header("Content-Type", "application/json").body(json).build();
+
                 } else {
-                    return request.createResponseBuilder(HttpStatus.BAD_REQUEST).body("Please provide a valid URL of an image").build();
+                    return request.createResponseBuilder(HttpStatus.BAD_REQUEST).body("Something went wrong").build();
                 }
 
 
